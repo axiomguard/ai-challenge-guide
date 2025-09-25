@@ -2,7 +2,7 @@
 
 > **A cutting-edge interactive web experience that teaches users to recognize and resist AI manipulation through practical, hands-on techniques.**
 
-[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-View_Project-blue?style=for-the-badge)](https://your-username.github.io/ai-challenge-guide/)
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-View_Project-blue?style=for-the-badge)](https://axiomguard.github.io/ai-challenge-guide/)
 [![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/HTML)
 [![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/CSS)
 [![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
@@ -26,7 +26,7 @@ This interactive web application addresses one of the most pressing issues of ou
 
 ## 🚀 **Live Demo & Screenshots**
 
-**[👉 Experience the Interactive Guide Live](https://your-username.github.io/ai-challenge-guide/)**
+**[👉 Experience the Interactive Guide Live](https://axiomguard.github.io/ai-challenge-guide/)**
 
 ### **Desktop Experience**
 ![Desktop Preview](https://via.placeholder.com/800x500/667eea/ffffff?text=Desktop+Preview)
@@ -126,7 +126,7 @@ Deployment: GitHub Pages
 ### **Local Development**
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/ai-challenge-guide.git
+git clone https://github.com/axiomguard/ai-challenge-guide.git
 
 # Navigate to project directory
 cd ai-challenge-guide
@@ -139,7 +139,7 @@ open index.html
 1. Fork this repository
 2. Go to Settings > Pages
 3. Select "Deploy from branch" > "main"
-4. Your site will be live at `https://your-username.github.io/ai-challenge-guide/`
+4. Your site will be live at `https://axiomguard.github.io/ai-challenge-guide/`
 
 ---
 
@@ -225,7 +225,7 @@ If you found this project valuable, please consider giving it a star! It helps o
 
 <div align="center">
 
-**[🌐 View Live Demo](https://your-username.github.io/ai-challenge-guide/) | [📧 Contact Developer](mailto:your-email@example.com) | [💼 Hire for Custom Projects](https://upwork.com/your-profile)**
+**[🌐 View Live Demo](https://axiomguard.github.io/ai-challenge-guide/) | [📧 Contact Developer](mailto:contact) | [💼 Hire for Custom Projects](https://upwork.com/your-profile)**
 
 *Building the future of ethical AI interaction, one project at a time.*
 
