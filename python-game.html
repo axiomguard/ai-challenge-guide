@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpine Farm Python Adventure</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 50%, #90EE90 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #6B8E23, #8FBC8F);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .season-indicator {
+            font-size: 1.2em;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .progress-bar {
+            background: #ddd;
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 30px;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            height: 100%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .lesson-card {
+            background: #f9f9f9;
+            border: 3px solid #6B8E23;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .lesson-card h2 {
+            color: #6B8E23;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+
+        .lesson-card p {
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .example-box {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+
+        .interactive-section {
+            background: #e3f2fd;
+            border: 2px solid #2196F3;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .interactive-section h3 {
+            color: #1976D2;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1em;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        button {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .hint-button {
+            background: linear-gradient(135deg, #FF9800, #F57C00);
+        }
+
+        .next-button {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+        }
+
+        .feedback {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-size: 1.1em;
+            display: none;
+        }
+
+        .feedback.correct {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+            display: block;
+        }
+
+        .feedback.incorrect {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+            display: block;
+        }
+
+        .celebration {
+            text-align: center;
+            padding: 30px;
+            display: none;
+        }
+
+        .celebration.show {
+            display: block;
+            animation: bounceIn 0.6s;
+        }
+
+        .celebration h2 {
+            font-size: 3em;
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .farm-visual {
+            text-align: center;
+            font-size: 4em;
+            margin: 20px 0;
+            line-height: 1.5;
+        }
+
+        .code-editor {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .code-editor textarea {
+            background: #1e2127;
+            color: #abb2bf;
+            border: none;
+            min-height: 200px;
+        }
+
+        .output-box {
+            background: #1e1e1e;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            min-height: 100px;
+            white-space: pre-wrap;
+        }
+
+        .lesson-nav {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .lesson-nav button {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .completed {
+            opacity: 0.7;
+            position: relative;
+        }
+
+        .completed::after {
+            content: "✓";
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5em;
+        }
+
+        .hint-box {
+            background: #fff9e6;
+            border-left: 5px solid #ffcc00;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .hint-box.show {
+            display: block;
+        }
+
+        .start-screen {
+            text-align: center;
+            padding: 50px;
+        }
+
+        .start-screen h2 {
+            font-size: 2.5em;
+            color: #6B8E23;
+            margin-bottom: 20px;
+        }
+
+        .start-screen p {
+            font-size: 1.3em;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏔️ Alpine Farm Python Adventure 🐄</h1>
+            <p>Learn Python by taking care of your mountain farm!</p>
+            <div class="season-indicator" id="season">🌸 Spring</div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress" style="width: 0%">0%</div>
+        </div>
+
+        <div class="main-content">
+            <div id="startScreen" class="start-screen">
+                <div class="farm-visual">🏔️🏡🐄🌲</div>
+                <h2>Welcome to Your Alpine Farm!</h2>
+                <p>You're about to become a Python programmer while managing a beautiful farm in the Alps. You'll learn to name your cows, make decisions, and write real code!</p>
+                <p><strong>What you'll learn:</strong></p>
+                <p>📦 Variables • ✅ Booleans • 🔢 Numbers • 📝 Strings • 🔀 Conditions • 💻 Real Coding</p>
+                <button onclick="startGame()" style="font-size: 1.5em; padding: 20px 40px;">Start Your Farm Adventure! 🚜</button>
+            </div>
+
+            <div id="gameContent" class="hidden">
+                <div class="lesson-nav" id="lessonNav"></div>
+                <div id="lessonContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const lessons = [
+            {
+                id: 1,
+                title: "🐄 Naming Your First Cow - Variables",
+                season: "🌸 Spring",
+                content: `
+                    <h2>Welcome to Spring! Time to name your first cow! 🐄</h2>
+                    <p>In Python, we use <strong>variables</strong> to store information. Think of a variable like a name tag for your cow!</p>
+                    
+                    <div class="example-box">
+                        <strong>Example:</strong><br>
+                        <code>cow_name = "Bella"</code><br>
+                        <p>This creates a variable called <code>cow_name</code> and stores "Bella" in it.</p>
+                    </div>
+
+                    <div class="farm-visual">🐄</div>
+
+                    <div class="interactive-section">
+                        <h3>Your Turn! Name Your Cow</h3>
+                        <p>Create a variable called <code>my_cow</code> and give your cow a name:</p>
+                        <input type="text" id="answer1" placeholder="Type: my_cow = 'YourCowName'">
+                        <button onclick="checkAnswer(1)">Check My Answer! ✓</button>
+                        <button class="hint-button" onclick="showHint(1)">Need a Hint? 💡</button>
+                        <div class="hint-box" id="hint1">
+                            <strong>Hint:</strong> Use the format: <code>my_cow = "ChooseAName"</code><br>
+                            Don't forget the quotes around the name!
+                        </div>
+                        <div class="feedback" id="feedback1"></div>
+                    </div>
+                `,
+                check: (answer) => {
+                    const normalized = answer.toLowerCase().replace(/\s/g, '');
+                    return normalized.includes('my_cow=') && (normalized.includes('"') || normalized.includes("'"));
+                },
+                correctMsg: "🎉 Perfect! You've named your first cow! Variables are the foundation of programming!",
+                incorrectMsg: "Not quite! Remember: my_cow = 'AnyName' (with quotes around the name)"
+            },
+            {
+                id: 2,
+                title: "🥛 Milk Production - Numbers",
+                season: "☀️ Summer",
+                content: `
+                    <h2>Summer is here! Time to track milk production! 🥛</h2>
+                    <p>Variables can store <strong>numbers</strong> too! Let's track how much milk your cow produces.</p>
+                    
+                    <div class="example-box">
+                        <strong>Example:</strong><br>
+                        <code>milk_liters = 15</code><br>
+                        <code>total_cows = 3</code><br>
+                        <p>Numbers don't need quotes!</p>
+                    </div>
+
+                    <div class="farm-visual">🐄🥛🥛🥛</div>
+
+                    <div class="interactive-section">
+                        <h3>Your Turn! Track Your Milk</h3>
+                        <p>Your cow produced 12 liters today. Create a variable called <code>daily_milk</code>:</p>
+                        <input type="text" id="answer2" placeholder="Type: daily_milk = 12">
+                        <button onclick="checkAnswer(2)">Check My Answer! ✓</button>
+                        <button class="hint-button" onclick="showHint(2)">Need a Hint? 💡</button>
+                        <div class="hint-box" id="hint2">
+                            <strong>Hint:</strong> Just write: <code>daily_milk = 12</code><br>
+                            No quotes needed for numbers!
+                        </div>
+                        <div class="feedback" id="feedback2"></div>
+                    </div>
+                `,
+                check: (answer) => {
+                    const normalized = answer.toLowerCase().replace(/\s/g, '');
+                    return normalized.includes('daily_milk=') && normalized.includes('12');
+                },
+                correctMsg: "🎉 Excellent! You're tracking your farm's production like a pro!",
+                incorrectMsg: "Try again! Write: daily_milk = 12 (no quotes for numbers)"
+            },
+            {
+                id: 3,
+                title: "🍽️ Is the Cow Hungry? - Booleans",
+                season: "🍂 Autumn",
+                content: `
+                    <h2>Autumn arrives! Time to make decisions! 🍂</h2>
+                    <p><strong>Booleans</strong> are special values that are either <code>True</code> or <code>False</code>. They help us make decisions!</p>
+                    
+                    <div class="example-box">
+                        <strong>Example:</strong><br>
+                        <code>is_hungry = True</code><br>
+                        <code>has_water = False</code><br>
+                        <p>Boolean values help you track the state of things!</p>
+                    </div>
+
+                    <div class="farm-visual">🐄😋</div>
+
+                    <div class="interactive-section">
+                        <h3>Your Turn! Check if Your Cow is Hungry</h3>
+                        <p>Your cow hasn't eaten in 6 hours. Create a variable <code>cow_hungry</code> and set it to True:</p>
+                        <input type="text" id="answer3" placeholder="Type: cow_hungry = True">
+                        <button onclick="checkAnswer(3)">Check My Answer! ✓</button>
+                        <button class="hint-button" onclick="showHint(3)">Need a Hint? 💡</button>
+                        <div class="hint-box" id="hint3">
+                            <strong>Hint:</strong> Write: <code>cow_hungry = True</code><br>
+                            Note: True must start with a capital T!
+                        </div>
+                        <div class="feedback" id="feedback3"></div>
+                    </div>
+                `,
+                check: (answer) => {
+                    const normalized = answer.replace(/\s/g, '');
+                    return normalized.includes('cow_hungry=') && normalized.includes('True');
+                },
+                correctMsg: "🎉 Perfect! Now you know how to use booleans for decisions!",
+                incorrectMsg: "Not quite! Write: cow_hungry = True (capital T in True)"
+            },
+            {
+                id: 4,
+                title: "🧀 Making Cheese - If Statements",
+                season: "❄️ Winter",
+                content: `
+                    <h2>Winter is here! Time to make decisions with if statements! ❄️</h2>
+                    <p><strong>If statements</strong> let your program make choices based on conditions.</p>
+                    
+                    <div class="example-box">
+                        <strong>Example:</strong><br>
+                        <code>if milk_liters > 10:<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;print("Make cheese!")</code><br>
+                        <p>If the condition is True, the code inside runs!</p>
+                    </div>
+
+                    <div class="farm-visual">🥛➡️🧀</div>
+
+                    <div class="interactive-section">
+                        <h3>Your Turn! Decide When to Make Cheese</h3>
+                        <p>Write an if statement: If milk_amount is greater than 5, print "Time for cheese!"</p>
+                        <textarea id="answer4" rows="3" placeholder="Type your if statement here..."></textarea>
+                        <button onclick="checkAnswer(4)">Check My Answer! ✓</button>
+                        <button class="hint-button" onclick="showHint(4)">Need a Hint? 💡</button>
+                        <div class="hint-box" id="hint4">
+                            <strong>Hint:</strong><br>
+                            <code>if milk_amount > 5:<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;print("Time for cheese!")</code><br>
+                            Don't forget the colon (:) and indentation!
+                        </div>
+                        <div class="feedback" id="feedback4"></div>
+                    </div>
+                `,
+                check: (answer) => {
+                    const normalized = answer.toLowerCase().replace(/\s+/g, ' ');
+                    return normalized.includes('if') && 
+                           normalized.includes('milk_amount') && 
+                           normalized.includes('>') && 
+                           normalized.includes('5') &&
+                           normalized.includes('print');
+                },
+                correctMsg: "🎉 Amazing! You've mastered if statements! Your farm is getting smarter!",
+                incorrectMsg: "Try again! You need: if milk_amount > 5: then print something"
+            },
+            {
+                id: 5,
+                title: "💻 Final Project - Your Own Farm Program!",
+                season: "🌸 Spring (New Year!)",
+                content: `
+                    <h2>Congratulations! Time for Your Final Project! 🎓</h2>
+                    <p>Now you'll write a complete Python program from scratch! Create a program that manages your Alpine farm.</p>
+                    
+                    <div class="example-box">
+                        <strong>Your Mission:</strong><br>
+                        1. Create variables for at least 2 cows with names<br>
+                        2. Track milk production (numbers)<br>
+                        3. Use a boolean to check if a cow is hungry<br>
+                        4. Write an if statement to decide when to make cheese<br>
+                        5. Print messages about your farm!
+                    </div>
+
+                    <div class="farm-visual">🏔️🏡🐄🐄🥛🧀</div>
+
+                    <div class="code-editor">
+                        <h3>Write Your Farm Program Here:</h3>
+                        <textarea id="finalCode" rows="15" placeholder="# Your Alpine Farm Program
+# Write your code here...
+
+"></textarea>
+                        <button onclick="runFinalProject()">🚀 Run My Farm Program!</button>
+                        <button class="hint-button" onclick="showHint(5)">Need Ideas? 💡</button>
+                        <div class="hint-box" id="hint5">
+                            <strong>Example Structure:</strong><br>
+                            <code>
+# Name your cows<br>
+cow1 = "Bella"<br>
+cow2 = "Daisy"<br>
+<br>
+# Track milk<br>
+total_milk = 25<br>
+<br>
+# Check conditions<br>
+is_feeding_time = True<br>
+<br>
+# Make decisions<br>
+if total_milk > 20:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;print("Let's make cheese!")<br>
+                            </code>
+                        </div>
+                        <h3>Output:</h3>
+                        <div class="output-box" id="output"></div>
+                        <div class="feedback" id="feedback5"></div>
+                    </div>
+                `,
+                check: () => true,
+                correctMsg: "🎉🎊 CONGRATULATIONS! You've completed the Alpine Farm Python Adventure! You're now a Python programmer! 🏔️👨‍💻",
+                incorrectMsg: ""
+            }
+        ];
+
+        let currentLesson = 0;
+        let completedLessons = new Set();
+        let progress = 0;
+
+        function startGame() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameContent').classList.remove('hidden');
+            loadProgress();
+            renderLessonNav();
+            showLesson(currentLesson);
+        }
+
+        function renderLessonNav() {
+            const nav = document.getElementById('lessonNav');
+            nav.innerHTML = lessons.map((lesson, index) => 
+                `<button onclick="showLesson(${index})" class="${completedLessons.has(index) ? 'completed' : ''}" 
+                 ${index > currentLesson ? 'disabled' : ''}>
+                    Lesson ${index + 1}
+                </button>`
+            ).join('');
+        }
+
+        function showLesson(index) {
+            if (index > currentLesson) return;
+            
+            const lesson = lessons[index];
+            document.getElementById('lessonContent').innerHTML = lesson.content;
+            document.getElementById('season').textContent = lesson.season;
+            currentLesson = index;
+            
+            updateProgress();
+        }
+
+        function checkAnswer(lessonId) {
+            const lesson = lessons[lessonId - 1];
+            const answer = lessonId === 5 ? 
+                document.getElementById('finalCode').value :
+                (lessonId === 4 ? 
+                    document.getElementById('answer4').value :
+                    document.getElementById(`answer${lessonId}`).value);
+            
+            const feedback = document.getElementById(`feedback${lessonId}`);
+            
+            if (lesson.check(answer)) {
+                feedback.className = 'feedback correct';
+                feedback.innerHTML = `✅ ${lesson.correctMsg}`;
+                completedLessons.add(lessonId - 1);
+                
+                if (lessonId < lessons.length) {
+                    setTimeout(() => {
+                        if (currentLesson < lessons.length - 1) {
+                            currentLesson++;
+                            renderLessonNav();
+                            showLesson(currentLesson);
+                            window.scrollTo(0, 0);
+                        }
+                    }, 2000);
+                } else {
+                    showCelebration();
+                }
+                
+                updateProgress();
+                saveProgress();
+            } else {
+                feedback.className = 'feedback incorrect';
+                feedback.innerHTML = `❌ ${lesson.incorrectMsg}`;
+            }
+        }
+
+        function showHint(lessonId) {
+            const hint = document.getElementById(`hint${lessonId}`);
+            hint.classList.toggle('show');
+        }
+
+        function runFinalProject() {
+            const code = document.getElementById('finalCode').value;
+            const output = document.getElementById('output');
+            
+            output.textContent = '';
+            
+            try {
+                const printMessages = [];
+                const customPrint = (msg) => printMessages.push(msg);
+                
+                const wrappedCode = `
+                    (function() {
+                        const print = ${customPrint};
+                        ${code}
+                        return true;
+                    })()
+                `;
+                
+                eval(wrappedCode);
+                
+                if (printMessages.length > 0) {
+                    output.textContent = printMessages.join('\n');
+                    checkAnswer(5);
+                } else {
+                    output.textContent = '✓ Code ran successfully!\n(Tip: Use print() to show messages)';
+                }
+            } catch (error) {
+                output.textContent = `Error: ${error.message}\n\nTip: Check your syntax and try again!`;
+            }
+        }
+
+        function updateProgress() {
+            progress = Math.round((completedLessons.size / lessons.length) * 100);
+            const progressBar = document.getElementById('progress');
+            progressBar.style.width = progress + '%';
+            progressBar.textContent = progress + '%';
+        }
+
+        function showCelebration() {
+            const celebration = document.createElement('div');
+            celebration.className = 'celebration show';
+            celebration.innerHTML = `
+                <h2>🎉🏆 CONGRATULATIONS! 🏆🎉</h2>
+                <div class="farm-visual">🏔️🏡🐄🐄🐄🥛🧀🎊</div>
+                <p style="font-size: 1.5em;">You've completed the Alpine Farm Python Adventure!</p>
+                <p style="font-size: 1.2em;">You're now a Python programmer! Keep learning and coding!</p>
+            `;
+            document.getElementById('lessonContent').appendChild(celebration);
+        }
+
+        function saveProgress() {
+            const state = {
+                currentLesson,
+                completedLessons: Array.from(completedLessons),
+                progress
+            };
+            localStorage.setItem('alpineFarmProgress', JSON.stringify(state));
+        }
+
+        function loadProgress() {
+            const saved = localStorage.getItem('alpineFarmProgress');
+            if (saved) {
+                const state = JSON.parse(saved);
+                currentLesson = state.currentLesson;
+                completedLessons = new Set(state.completedLessons);
+                progress = state.progress;
+                updateProgress();
+            }
+        }
+    </script>
+</body>
+</html>
