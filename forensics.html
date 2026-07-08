@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AXIOM Image Forensics — Beta</title>
+<meta name="description" content="Análise forense de imagens geradas por IA. Proveniência, artefatos e laudo com hash criptográfico. 100% local — sua imagem nunca sai do navegador.">
+<style>
+  :root{
+    --ink:#0B1416;
+    --panel:#101D20;
+    --panel-2:#0E181B;
+    --line:#1E3236;
+    --teal:#1E7A77;
+    --teal-bright:#2FA39E;
+    --paper:#F4F6F5;
+    --paper-ink:#15272A;
+    --text:#D7E2E0;
+    --muted:#7E9694;
+    --amber:#D9A441;
+    --red:#D96459;
+    --green:#5FAE7F;
+    --mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --sans:"Inter", -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} *{animation:none!important;transition:none!important} }
+  body{background:var(--ink);color:var(--text);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:var(--teal-bright)}
+  .wrap{max-width:880px;margin:0 auto;padding:0 20px}
+
+  /* header */
+  header{border-bottom:1px solid var(--line);padding:18px 0}
+  .hrow{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text)}
+  .brand svg{flex:0 0 auto}
+  .brand b{letter-spacing:.14em;font-size:.95rem}
+  .brand span{color:var(--muted);font-size:.72rem;letter-spacing:.22em;text-transform:uppercase}
+  .beta-pill{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;color:var(--amber);border:1px solid color-mix(in srgb, var(--amber) 45%, transparent);padding:3px 9px;border-radius:999px;white-space:nowrap}
+
+  /* hero */
+  .hero{padding:52px 0 30px}
+  .eyebrow{font-family:var(--mono);color:var(--teal-bright);font-size:.72rem;letter-spacing:.28em;text-transform:uppercase;margin-bottom:14px}
+  h1{font-size:clamp(1.7rem,4.6vw,2.6rem);font-weight:650;letter-spacing:-.015em;line-height:1.15;max-width:21ch}
+  .hero p{color:var(--muted);max-width:56ch;margin-top:14px}
+  .privacy{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-family:var(--mono);font-size:.74rem;color:var(--green);border:1px solid color-mix(in srgb, var(--green) 40%, transparent);border-radius:6px;padding:7px 12px}
+  .privacy .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+
+  /* dropzone */
+  .drop{margin:34px 0 10px;border:1.5px dashed var(--line);border-radius:12px;background:var(--panel-2);padding:44px 24px;text-align:center;cursor:pointer;transition:border-color .2s, background .2s}
+  .drop:hover,.drop:focus-visible,.drop.over{border-color:var(--teal);background:#0F2023;outline:none}
+  .drop .icn{color:var(--teal-bright);margin-bottom:10px}
+  .drop h2{font-size:1.02rem;font-weight:600}
+  .drop p{color:var(--muted);font-size:.85rem;margin-top:6px}
+  .drop .fmt{font-family:var(--mono);font-size:.7rem;color:var(--muted);margin-top:14px;letter-spacing:.08em}
+  #file{display:none}
+
+  /* progress */
+  .progress{display:none;margin:18px 0;font-family:var(--mono);font-size:.78rem;color:var(--muted)}
+  .progress .bar{height:3px;background:var(--line);border-radius:2px;overflow:hidden;margin-top:8px}
+  .progress .bar i{display:block;height:100%;width:0%;background:var(--teal-bright);transition:width .3s}
+
+  /* verdict */
+  .verdict{display:none;margin:26px 0 0;border-radius:12px;padding:22px 22px;border:1px solid var(--line)}
+  .verdict.ai{background:linear-gradient(180deg,#241416,#1B1113);border-color:color-mix(in srgb, var(--red) 45%, transparent)}
+  .verdict.mid{background:linear-gradient(180deg,#231D10,#1A160D);border-color:color-mix(in srgb, var(--amber) 45%, transparent)}
+  .verdict.cam{background:linear-gradient(180deg,#12231B,#0E1B15);border-color:color-mix(in srgb, var(--green) 40%, transparent)}
+  .verdict .vlabel{font-family:var(--mono);font-size:.7rem;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+  .verdict h3{font-size:1.25rem;margin-top:6px;font-weight:650}
+  .verdict.ai h3{color:#F3A79F}.verdict.mid h3{color:#E9C989}.verdict.cam h3{color:#9AD4B2}
+  .verdict p{color:var(--muted);font-size:.88rem;margin-top:8px;max-width:64ch}
+  .conf{display:flex;align-items:center;gap:12px;margin-top:14px}
+  .conf .track{flex:1;height:6px;border-radius:3px;background:#0009;overflow:hidden}
+  .conf .track i{display:block;height:100%;border-radius:3px}
+  .conf b{font-family:var(--mono);font-size:.85rem}
+
+  /* report */
+  .report{display:none;margin:26px 0 40px}
+  .sec{border:1px solid var(--line);border-radius:12px;background:var(--panel);margin-top:16px;overflow:hidden}
+  .sec>header{border:none;padding:14px 18px;display:flex;align-items:center;gap:10px;background:var(--panel-2)}
+  .sec>header .n{font-family:var(--mono);color:var(--teal-bright);font-size:.72rem;letter-spacing:.1em}
+  .sec>header h4{font-size:.86rem;font-weight:600;letter-spacing:.04em}
+  .sec .body{padding:6px 18px 16px}
+  .sig{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid color-mix(in srgb, var(--line) 60%, transparent);font-size:.86rem}
+  .sig:last-child{border-bottom:none}
+  .sig .tag{flex:0 0 auto;font-family:var(--mono);font-size:.64rem;letter-spacing:.1em;padding:3px 8px;border-radius:4px;margin-top:2px;text-transform:uppercase}
+  .tag.ai{color:var(--red);border:1px solid color-mix(in srgb, var(--red) 50%, transparent)}
+  .tag.warn{color:var(--amber);border:1px solid color-mix(in srgb, var(--amber) 50%, transparent)}
+  .tag.cam{color:var(--green);border:1px solid color-mix(in srgb, var(--green) 50%, transparent)}
+  .tag.info{color:var(--muted);border:1px solid var(--line)}
+  .sig .txt b{font-weight:600;color:var(--text)}
+  .sig .txt small{display:block;color:var(--muted);font-family:var(--mono);font-size:.72rem;margin-top:3px;word-break:break-word}
+  .kv{font-family:var(--mono);font-size:.76rem;color:var(--muted);display:grid;grid-template-columns:170px 1fr;gap:4px 14px;padding:12px 0}
+  .kv b{color:var(--text);font-weight:500;word-break:break-all}
+  @media(max-width:560px){.kv{grid-template-columns:1fr}.kv b{margin-bottom:6px}}
+
+  /* ELA */
+  .ela-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:12px 0}
+  @media(max-width:560px){.ela-row{grid-template-columns:1fr}}
+  .ela-row figure{margin:0}
+  .ela-row canvas,.ela-row img{width:100%;border-radius:8px;border:1px solid var(--line);display:block;background:#000}
+  .ela-row figcaption{font-family:var(--mono);font-size:.68rem;color:var(--muted);margin-top:7px;letter-spacing:.06em}
+
+  /* laudo footer */
+  .laudo{margin-top:16px;border-radius:12px;background:var(--paper);color:var(--paper-ink);padding:20px 22px;border:1px solid #fff2}
+  .laudo .lhead{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;border-bottom:2px solid var(--paper-ink);padding-bottom:10px}
+  .laudo .lhead b{letter-spacing:.16em;font-size:.8rem}
+  .laudo .lhead span{font-family:var(--mono);font-size:.72rem}
+  .laudo .hashes{font-family:var(--mono);font-size:.7rem;line-height:1.7;margin-top:12px;word-break:break-all}
+  .laudo .hashes b{font-weight:700}
+  .laudo .note{font-size:.74rem;margin-top:12px;color:#3C5457}
+  .actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+  button.btn{font-family:var(--mono);font-size:.76rem;letter-spacing:.08em;padding:10px 16px;border-radius:8px;cursor:pointer;border:1px solid var(--teal);background:var(--teal);color:#fff}
+  button.btn.ghost{background:transparent;color:var(--teal-bright)}
+  button.btn:hover{filter:brightness(1.1)}
+  button.btn:focus-visible{outline:2px solid var(--teal-bright);outline-offset:2px}
+
+  /* roadmap strip */
+  .strip{margin:34px 0 30px;border-top:1px solid var(--line);padding-top:22px;color:var(--muted);font-size:.82rem}
+  .strip b{color:var(--text)}
+  .strip .layers{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:14px}
+  .layer{border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:.78rem}
+  .layer .st{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;margin-bottom:6px;display:block}
+  .layer.on .st{color:var(--green)}
+  .layer.off .st{color:var(--muted)}
+
+  footer{border-top:1px solid var(--line);padding:22px 0 34px;color:var(--muted);font-size:.76rem}
+  footer .frow{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .disc{font-size:.72rem;color:var(--muted);margin-top:10px;max-width:74ch}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap hrow">
+    <a class="brand" href="/" aria-label="AXIOM Guard — início">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+        <path d="M13 1 24 6.5v7C24 20 19.5 24.2 13 25 6.5 24.2 2 20 2 13.5v-7L13 1Z" stroke="#1E7A77" stroke-width="1.6"/>
+        <path d="M8.5 16.5 13 7l4.5 9.5M10.2 13.4h5.6" stroke="#2FA39E" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <div><b>AXIOM GUARD</b><br><span>Image Forensics</span></div>
+    </a>
+    <span class="beta-pill">BETA · Camadas 1–2</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="eyebrow">Detecção de imagem gerada por IA</div>
+    <h1>Essa imagem é real — ou foi gerada?</h1>
+    <p>Análise forense de proveniência e artefatos. Cada análise produz um laudo com hash SHA-256, no padrão de evidência do AXIOM Witness. Sem porcentagem mágica: indícios verificáveis, um a um.</p>
+    <div class="privacy"><span class="dot"></span>100% local — sua imagem nunca sai do navegador</div>
+  </section>
+
+  <div class="drop" id="drop" role="button" tabindex="0" aria-label="Selecionar imagem para análise">
+    <div class="icn"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
+    <h2>Arraste uma imagem ou toque para escolher</h2>
+    <p>A análise roda no seu dispositivo e leva segundos.</p>
+    <div class="fmt">JPEG · PNG · WEBP — até 25 MB</div>
+    <input type="file" id="file" accept="image/jpeg,image/png,image/webp">
+  </div>
+
+  <div class="progress" id="progress" aria-live="polite">
+    <span id="pmsg">Lendo bytes…</span>
+    <div class="bar"><i id="pbar"></i></div>
+  </div>
+
+  <section class="verdict" id="verdict" aria-live="polite">
+    <div class="vlabel">Veredito preliminar</div>
+    <h3 id="vtitle"></h3>
+    <p id="vtext"></p>
+    <div class="conf"><div class="track"><i id="vconf"></i></div><b id="vconfn"></b></div>
+  </section>
+
+  <section class="report" id="report">
+    <div class="sec">
+      <header><span class="n">CAMADA 1</span><h4>Proveniência — metadados e credenciais</h4></header>
+      <div class="body">
+        <div id="provSignals"></div>
+        <div class="kv" id="metaKv"></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <header><span class="n">CAMADA 2</span><h4>Artefatos — análise de nível de erro (ELA)</h4></header>
+      <div class="body">
+        <div id="elaSignals"></div>
+        <div class="ela-row" id="elaRow" style="display:none">
+          <figure><img id="srcPrev" alt="Imagem analisada (prévia)"><figcaption>ORIGINAL</figcaption></figure>
+          <figure><canvas id="elaCanvas"></canvas><figcaption>MAPA ELA ×12 — <span id="elaStat"></span></figcaption></figure>
+        </div>
+      </div>
+    </div>
+
+    <div class="laudo" id="laudoBox">
+      <div class="lhead"><b>LAUDO PRELIMINAR AXIOM</b><span id="laudoId"></span></div>
+      <div class="hashes">
+        <b>SHA-256 (arquivo):</b> <span id="hashFile"></span><br>
+        <b>SHA-256 (laudo):</b> <span id="hashReport"></span><br>
+        <b>Gerado em:</b> <span id="laudoTime"></span> · <b>Motor:</b> AXF-beta-0.1 (client-side)
+      </div>
+      <p class="note">Laudo preliminar automatizado, camadas 1–2 (proveniência + artefatos). Não substitui perícia técnica assinada. A ausência de indícios não certifica autenticidade; a presença de indícios não constitui prova isolada.</p>
+      <div class="actions">
+        <button class="btn" id="dlReport">Baixar laudo (.json)</button>
+        <button class="btn ghost" id="newRun">Analisar outra imagem</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="strip">
+    <b>Como esta análise funciona — e o que ainda não faz.</b> Detectores que prometem "100% de certeza" quebram na primeira recompressão de WhatsApp. O AXIOM entrega o contrário: evidências nomeadas e um laudo verificável.
+    <div class="layers">
+      <div class="layer on"><span class="st">● Ativa</span><b>1 · Proveniência</b><br>EXIF, chunks PNG, assinaturas de geradores, Content Credentials (C2PA)</div>
+      <div class="layer on"><span class="st">● Ativa</span><b>2 · Artefatos</b><br>Error Level Analysis, geometria típica de difusão</div>
+      <div class="layer off"><span class="st">○ Em breve</span><b>3 · Classificador</b><br>Ensemble de modelos + identificação do gerador provável</div>
+      <div class="layer off"><span class="st">○ Em breve</span><b>4 · Selo AXIOM</b><br>Cadeia de hash ancorada — mesma engenharia do Witness</div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="frow">
+      <span>© 2026 AXIOM Guard · axiomguard.ai</span>
+      <span>GDPR · LGPD · nFADP — nenhum dado coletado nesta página</span>
+    </div>
+    <p class="disc">Beta pública. Resultados são indicativos e probabilísticos por natureza. Para laudo pericial completo (camadas 1–4 com cadeia de custódia), contate a AXIOM Guard.</p>
+  </div>
+</footer>
+
+<script>
+(() => {
+"use strict";
+
+/* ---------- utils ---------- */
+const $ = id => document.getElementById(id);
+const td = new TextDecoder("latin1");
+async function sha256(buf){
+  const h = await crypto.subtle.digest("SHA-256", buf);
+  return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+const GEN_SIGS = [
+  ["comfyui","ComfyUI"],["stable diffusion","Stable Diffusion"],["stable-diffusion","Stable Diffusion"],
+  ["sdxl","SDXL"],["sd-webui","Stable Diffusion WebUI"],["automatic1111","AUTOMATIC1111"],
+  ["invokeai","InvokeAI"],["novelai","NovelAI"],["midjourney","Midjourney"],
+  ["dall-e","DALL·E"],["dall\u00b7e","DALL·E"],["adobe firefly","Adobe Firefly"],["firefly","Adobe Firefly"],
+  ["kling","Kling"],["ideogram","Ideogram"],["recraft","Recraft"],["leonardo.ai","Leonardo.Ai"],
+  ["runwayml","Runway"],["black-forest-labs","FLUX (Black Forest Labs)"],["flux.1","FLUX"],
+  ["imagen 3","Google Imagen"],["gemini","Google Gemini"],["grok imagine","Grok"],["gpt-image","GPT Image"]
+];
+
+/* ---------- state ---------- */
+let report = null;
+
+/* ---------- dropzone wiring ---------- */
+const drop = $("drop"), fileIn = $("file");
+drop.addEventListener("click", ()=>fileIn.click());
+drop.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault();fileIn.click();}});
+["dragover","dragenter"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("over");}));
+["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("over");}));
+drop.addEventListener("drop", e=>{ const f=e.dataTransfer.files[0]; if(f) run(f); });
+fileIn.addEventListener("change", ()=>{ if(fileIn.files[0]) run(fileIn.files[0]); });
+$("newRun")?.addEventListener("click", ()=>{ location.hash=""; window.scrollTo({top:0}); fileIn.value=""; ["verdict","report"].forEach(i=>$(i).style.display="none"); });
+
+/* ---------- progress ---------- */
+function prog(msg,pct){ $("progress").style.display="block"; $("pmsg").textContent=msg; $("pbar").style.width=pct+"%"; }
+
+/* ---------- EXIF (TIFF) parser ---------- */
+function parseTIFF(dv, base){
+  const out = {};
+  try{
+    const little = dv.getUint16(base)===0x4949;
+    const g16=o=>dv.getUint16(base+o,little), g32=o=>dv.getUint32(base+o,little);
+    if(dv.getUint16(base+2,little)!==42) return out;
+    const readIFD2 = (off) => {
+      const entries = dv.getUint16(base+off, little);
+      const found = {};
+      for(let i=0;i<entries;i++){
+        const e = base+off+2+i*12;
+        const tag = dv.getUint16(e, little);
+        const type = dv.getUint16(e+2, little);
+        const count = dv.getUint32(e+4, little);
+        let valOff = e+8;
+        const size = (type===2||type===1||type===7?1:type===3?2:4)*count;
+        if(size>4) valOff = base + dv.getUint32(e+8, little);
+        if(type===2){ // ASCII
+          let s="";
+          for(let k=0;k<count-1 && k<256;k++){ const c=dv.getUint8(valOff+k); if(!c)break; s+=String.fromCharCode(c); }
+          found[tag]=s.trim();
+        } else if(type===3){ found[tag]=dv.getUint16(valOff,little); }
+        else if(type===4){ found[tag]=dv.getUint32(valOff,little); }
+      }
+      return found;
+    };
+    const ifd0 = readIFD2(g32(4));
+    if(ifd0[0x010F]) out.make = ifd0[0x010F];
+    if(ifd0[0x0110]) out.model = ifd0[0x0110];
+    if(ifd0[0x0131]) out.software = ifd0[0x0131];
+    if(ifd0[0x0132]) out.datetime = ifd0[0x0132];
+    if(ifd0[0x8825]) out.gps = true;
+    if(ifd0[0x8769]){
+      const ex = readIFD2(ifd0[0x8769]);
+      if(ex[0x9003]) out.dateOriginal = ex[0x9003];
+      if(ex[0xA002]) out.pixX = ex[0xA002];
+    }
+  }catch(_){}
+  return out;
+}
+
+/* ---------- JPEG scan ---------- */
+function scanJPEG(buf){
+  const dv = new DataView(buf), u8 = new Uint8Array(buf);
+  const res = { format:"JPEG", exif:{}, hasExif:false, hasXMP:false, hasJUMBF:false, w:0, h:0 };
+  let o=2;
+  while(o+4 < u8.length){
+    if(u8[o]!==0xFF) { o++; continue; }
+    const marker = u8[o+1];
+    if(marker===0xD8){o+=2;continue;}
+    if(marker===0xD9||marker===0xDA) break;
+    const len = dv.getUint16(o+2);
+    if(marker===0xE1){
+      const head = td.decode(u8.subarray(o+4, o+4+29));
+      if(head.startsWith("Exif")){ res.hasExif=true; res.exif = parseTIFF(dv, o+10); }
+      else if(head.includes("ns.adobe.com/xap")) res.hasXMP=true;
+    }
+    if(marker===0xEB){ // APP11 JUMBF (C2PA)
+      const seg = td.decode(u8.subarray(o+4, o+4+Math.min(len,64)));
+      if(/jumb|c2pa/i.test(seg)) res.hasJUMBF=true;
+    }
+    if(marker>=0xC0 && marker<=0xCF && marker!==0xC4 && marker!==0xC8 && marker!==0xCC){
+      res.h = dv.getUint16(o+5); res.w = dv.getUint16(o+7);
+    }
+    o += 2 + len;
+  }
+  return res;
+}
+
+/* ---------- PNG scan ---------- */
+function scanPNG(buf){
+  const dv = new DataView(buf), u8 = new Uint8Array(buf);
+  const res = { format:"PNG", exif:{}, hasExif:false, textChunks:[], hasJUMBF:false, hasWorkflow:false, w:0, h:0 };
+  let o=8;
+  while(o+8 <= u8.length){
+    const len = dv.getUint32(o);
+    const type = td.decode(u8.subarray(o+4,o+8));
+    const dstart = o+8;
+    if(type==="IHDR"){ res.w=dv.getUint32(dstart); res.h=dv.getUint32(dstart+4); }
+    if(type==="tEXt"||type==="iTXt"){
+      const raw = u8.subarray(dstart, dstart+Math.min(len, 40000));
+      const z = raw.indexOf(0);
+      const key = td.decode(raw.subarray(0, z>0?z:0)).toLowerCase();
+      const val = td.decode(raw.subarray(z+1)).slice(0, 4000);
+      res.textChunks.push({key, val});
+      if(key==="prompt"||key==="workflow") res.hasWorkflow=true;
+    }
+    if(type==="eXIf"){ res.hasExif=true; res.exif = parseTIFF(dv, dstart); }
+    if(type==="caBX") res.hasJUMBF=true;
+    if(type==="IEND") break;
+    o = dstart + len + 4;
+  }
+  return res;
+}
+
+/* ---------- generic signature sweep ---------- */
+function sweepSignatures(buf){
+  const N = Math.min(buf.byteLength, 3_000_000);
+  const head = td.decode(new Uint8Array(buf, 0, N)).toLowerCase();
+  const hits = [];
+  for(const [needle,label] of GEN_SIGS){
+    if(head.includes(needle) && !hits.some(h=>h.label===label)) hits.push({needle,label});
+  }
+  const c2pa = head.includes("c2pa") || head.includes("contentcredentials");
+  return {hits, c2pa};
+}
+
+/* ---------- ELA ---------- */
+function runELA(img){
+  return new Promise(resolve=>{
+    try{
+      const w = Math.min(img.naturalWidth, 1400), scale = w/img.naturalWidth, h = Math.round(img.naturalHeight*scale);
+      const c1=document.createElement("canvas"); c1.width=w; c1.height=h;
+      const x1=c1.getContext("2d"); x1.drawImage(img,0,0,w,h);
+      const orig = x1.getImageData(0,0,w,h);
+      c1.toBlob(blob=>{
+        const im2=new Image();
+        im2.onload=()=>{
+          const c2=document.createElement("canvas"); c2.width=w; c2.height=h;
+          const x2=c2.getContext("2d"); x2.drawImage(im2,0,0,w,h);
+          const rec=x2.getImageData(0,0,w,h);
+          const out=x2.createImageData(w,h);
+          let sum=0, sum2=0, n=orig.data.length/4;
+          for(let i=0;i<orig.data.length;i+=4){
+            let m=0;
+            for(let k=0;k<3;k++){
+              const d=Math.abs(orig.data[i+k]-rec.data[i+k]);
+              out.data[i+k]=Math.min(255,d*12);
+              m+=d;
+            }
+            out.data[i+3]=255;
+            m/=3; sum+=m; sum2+=m*m;
+          }
+          const mean=sum/n, std=Math.sqrt(Math.max(0,sum2/n-mean*mean));
+          const cv=$("elaCanvas"); cv.width=w; cv.height=h;
+          cv.getContext("2d").putImageData(out,0,0);
+          URL.revokeObjectURL(im2.src);
+          resolve({mean:+mean.toFixed(2), std:+std.toFixed(2)});
+        };
+        im2.src=URL.createObjectURL(blob);
+      },"image/jpeg",0.9);
+    }catch(_){ resolve(null); }
+  });
+}
+
+/* ---------- signals & scoring ---------- */
+function push(list, tag, title, detail){ list.push({tag,title,detail}); }
+
+function evaluate(scan, sweep, file){
+  const prov=[], art=[]; let score=0;
+  const ex = scan.exif||{};
+
+  // generator signatures
+  for(const h of sweep.hits){ push(prov,"ai",`Assinatura de gerador: ${h.label}`,`Sequência "${h.needle}" localizada nos metadados/bytes do arquivo.`); score+=3; }
+  if(scan.hasWorkflow){ push(prov,"ai","Workflow ComfyUI embutido","Chunks 'prompt'/'workflow' presentes — a imagem carrega a própria receita de geração."); score+=4; }
+  const params = (scan.textChunks||[]).find(t=>t.key==="parameters");
+  if(params){ push(prov,"ai","Parâmetros de difusão embutidos",`Chunk 'parameters' presente: "${params.val.slice(0,140)}…"`); score+=4; }
+
+  // C2PA
+  if(scan.hasJUMBF || sweep.c2pa){
+    push(prov,"warn","Content Credentials (C2PA) presentes","Manifesto de proveniência detectado. Câmeras novas e geradores (Firefly, DALL·E) assinam C2PA — inspecionar o emissor na camada 3.");
+    score+=1;
+  }
+
+  // EXIF camera evidence
+  if(ex.make||ex.model){ push(prov,"cam",`Fabricante/câmera: ${[ex.make,ex.model].filter(Boolean).join(" ")}`,"Campos Make/Model presentes — consistente com captura por dispositivo real (falsificável, mas raro em geradores)."); score-=2; }
+  if(ex.dateOriginal){ push(prov,"cam",`Data de captura original: ${ex.dateOriginal}`,"DateTimeOriginal presente no bloco EXIF."); score-=1; }
+  if(ex.gps){ push(prov,"cam","Coordenadas GPS presentes","Bloco GPS-IFD encontrado — típico de fotos de celular."); score-=1; }
+  if(ex.software){
+    const s=ex.software.toLowerCase();
+    const aiHit = GEN_SIGS.find(([n])=>s.includes(n));
+    if(aiHit){ push(prov,"ai",`Campo Software: ${ex.software}`,"O próprio EXIF declara o gerador."); score+=4; }
+    else push(prov,"info",`Campo Software: ${ex.software}`,"Indica edição/processamento — não determina origem.");
+  }
+  if(!scan.hasExif && scan.format==="JPEG"){ push(prov,"warn","JPEG sem bloco EXIF","Metadados ausentes ou removidos. Comum em imagens geradas E em redes sociais (WhatsApp remove EXIF ao recomprimir)."); score+=1; }
+
+  // dimensions heuristic
+  if(scan.w&&scan.h){
+    const m64 = scan.w%64===0 && scan.h%64===0;
+    const common = [[512,512],[768,768],[1024,1024],[832,1216],[1216,832],[896,1152],[1152,896],[1344,768],[768,1344],[2048,2048],[1024,1536],[1536,1024]]
+      .some(([a,b])=>a===scan.w&&b===scan.h);
+    if(common){ push(art,"warn",`Geometria ${scan.w}×${scan.h}`,"Resolução nativa típica de modelos de difusão (múltiplos de 64)."); score+=1; }
+    else if(m64 && scan.w<=2048){ push(art,"info",`Dimensões múltiplas de 64 (${scan.w}×${scan.h})`,"Compatível com pipeline de difusão — sinal fraco isolado."); }
+  }
+  return {prov, art, score};
+}
+
+function verdictFrom(score, hasCam){
+  if(score>=4) return {cls:"ai", pct:Math.min(97, 68+score*4), title:"Fortes indícios de geração por IA",
+    text:"Assinaturas de gerador foram encontradas nos próprios bytes do arquivo. Indício de alto valor probatório — baixíssima taxa de falso positivo."};
+  if(score>=2) return {cls:"mid", pct:55+score*5, title:"Indícios parciais — análise inconclusiva",
+    text:"Há sinais compatíveis com geração por IA, mas nenhuma assinatura conclusiva. A camada 3 (classificador ensemble) é indicada para esta imagem."};
+  if(score<=0 && hasCam) return {cls:"cam", pct:22, title:"Consistente com captura por câmera",
+    text:"Metadados de dispositivo real presentes e nenhum indício de geração encontrado. Atenção: metadados podem ser transplantados — isto não certifica autenticidade."};
+  return {cls:"mid", pct:50, title:"Inconclusivo — metadados insuficientes",
+    text:"Sem assinaturas de gerador e sem evidência de câmera. Típico de imagem que passou por rede social (recompressão remove tudo). Recomenda-se camada 3."};
+}
+
+/* ---------- render ---------- */
+function renderSignals(el, list){
+  el.innerHTML = list.length ? "" : '<div class="sig"><span class="tag info">—</span><div class="txt"><b>Nenhum sinal nesta camada.</b></div></div>';
+  for(const s of list){
+    const d=document.createElement("div"); d.className="sig";
+    d.innerHTML = `<span class="tag ${s.tag}">${s.tag==="ai"?"IA":s.tag==="cam"?"CAM":s.tag==="warn"?"ATEN":"INFO"}</span>
+      <div class="txt"><b></b><small></small></div>`;
+    d.querySelector("b").textContent=s.title;
+    d.querySelector("small").textContent=s.detail;
+    el.appendChild(d);
+  }
+}
+
+/* ---------- main ---------- */
+async function run(file){
+  if(file.size > 25*1024*1024){ alert("Arquivo acima de 25 MB."); return; }
+  ["verdict","report"].forEach(i=>$(i).style.display="none");
+  prog("Lendo bytes…",10);
+  const buf = await file.arrayBuffer();
+  prog("Hash SHA-256 do arquivo…",25);
+  const fileHash = await sha256(buf);
+  const u8=new Uint8Array(buf);
+  let scan;
+  prog("Analisando estrutura e metadados…",45);
+  if(u8[0]===0xFF&&u8[1]===0xD8) scan=scanJPEG(buf);
+  else if(u8[0]===0x89&&u8[1]===0x50) scan=scanPNG(buf);
+  else if(td.decode(u8.subarray(0,4))==="RIFF") scan={format:"WEBP",exif:{},hasExif:td.decode(u8.subarray(0,Math.min(u8.length,4096))).includes("EXIF"),textChunks:[],w:0,h:0};
+  else { alert("Formato não suportado. Use JPEG, PNG ou WEBP."); $("progress").style.display="none"; return; }
+
+  const sweep = sweepSignatures(buf);
+  const {prov, art, score} = evaluate(scan, sweep, file);
+
+  // preview + ELA
+  prog("Executando Error Level Analysis…",70);
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  await new Promise(r=>{ img.onload=r; img.onerror=r; img.src=url; });
+  if(!scan.w && img.naturalWidth){ scan.w=img.naturalWidth; scan.h=img.naturalHeight; }
+  $("srcPrev").src=url;
+  let ela=null;
+  if(scan.format==="JPEG" && img.naturalWidth){
+    ela = await runELA(img);
+    if(ela){
+      $("elaRow").style.display="grid";
+      $("elaStat").textContent=`erro médio ${ela.mean} · desvio ${ela.std}`;
+      art.push({tag:"info", title:`ELA: erro médio ${ela.mean}, desvio ${ela.std}`,
+        detail: ela.std<6 ? "Campo de erro homogêneo — compatível com imagem sintética ou fortemente recomprimida (informativo, não conclusivo)."
+                          : "Variação de erro heterogênea — padrão comum em fotografias com regiões de detalhe distintas."});
+    }
+  } else { $("elaRow").style.display="none"; }
+
+  prog("Fechando laudo…",90);
+  const hasCam = !!(scan.exif && (scan.exif.make||scan.exif.model));
+  const v = verdictFrom(score, hasCam);
+
+  // verdict UI
+  const vb=$("verdict"); vb.className="verdict "+v.cls; vb.style.display="block";
+  $("vtitle").textContent=v.title; $("vtext").textContent=v.text;
+  const col = v.cls==="ai"?"var(--red)":v.cls==="cam"?"var(--green)":"var(--amber)";
+  $("vconf").style.cssText=`width:${v.pct}%;background:${col}`;
+  $("vconfn").textContent=`índice ${v.pct}`;
+
+  // sections
+  renderSignals($("provSignals"), prov);
+  renderSignals($("elaSignals"), art);
+  const ex=scan.exif||{};
+  $("metaKv").innerHTML = [
+    ["Arquivo", file.name],["Formato", scan.format],["Dimensões", scan.w?`${scan.w} × ${scan.h}px`:"—"],
+    ["Tamanho", (file.size/1024).toFixed(1)+" KB"],["EXIF", scan.hasExif?"presente":"ausente"],
+    ["C2PA/JUMBF", (scan.hasJUMBF||sweep.c2pa)?"detectado":"ausente"],
+    ["Câmera", [ex.make,ex.model].filter(Boolean).join(" ")||"—"],["Software", ex.software||"—"]
+  ].map(([k,vv])=>`<span>${k}</span><b></b>`).join("");
+  // safe text assignment
+  const bs=$("metaKv").querySelectorAll("b");
+  [file.name, scan.format, scan.w?`${scan.w} × ${scan.h}px`:"—", (file.size/1024).toFixed(1)+" KB",
+   scan.hasExif?"presente":"ausente", (scan.hasJUMBF||sweep.c2pa)?"detectado":"ausente",
+   [ex.make,ex.model].filter(Boolean).join(" ")||"—", ex.software||"—"].forEach((t,i)=>bs[i].textContent=t);
+
+  // laudo
+  const now=new Date();
+  report = {
+    laudo_id:`AXIOM-IMG-${now.toISOString().slice(0,10).replace(/-/g,"")}-${fileHash.slice(0,8).toUpperCase()}`,
+    engine:"AXF-beta-0.1", generated_at:now.toISOString(),
+    file:{name:file.name,size:file.size,sha256:fileHash,format:scan.format,width:scan.w,height:scan.h},
+    verdict:{class:v.cls,title:v.title,index:v.pct,score},
+    signals:{provenance:prov,artifacts:art},
+    ela, disclaimer:"Laudo preliminar automatizado (camadas 1-2). Não substitui perícia assinada."
+  };
+  const repHash = await sha256(new TextEncoder().encode(JSON.stringify(report)));
+  report.report_sha256 = repHash;
+  $("laudoId").textContent=report.laudo_id;
+  $("hashFile").textContent=fileHash;
+  $("hashReport").textContent=repHash;
+  $("laudoTime").textContent=now.toLocaleString("pt-BR");
+
+  $("progress").style.display="none";
+  $("report").style.display="block";
+  vb.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+$("dlReport").addEventListener("click", ()=>{
+  if(!report) return;
+  const b=new Blob([JSON.stringify(report,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(b);
+  a.download=report.laudo_id+".json"; a.click(); URL.revokeObjectURL(a.href);
+});
+})();
+</script>
+</body>
+</html>
